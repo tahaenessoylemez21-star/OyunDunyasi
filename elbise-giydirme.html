@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>👗 Elbise Giydirme</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#ff9a9e,#fecfef,#ffecd2);min-height:100vh;font-family:'Arial Rounded MT Bold',Arial,sans-serif;overflow-x:hidden}
+
+/* Parıltılar */
+.parıltı{position:fixed;pointer-events:none;font-size:20px;animation:yukariUc 2s ease-out forwards;z-index:1000}
+@keyframes yukariUc{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-100px) scale(0);opacity:0}}
+
+/* Header */
+.header{text-align:center;padding:15px 10px 10px;position:relative;z-index:2}
+.header h1{font-size:28px;color:white;text-shadow:0 3px 10px rgba(255,100,150,0.5);letter-spacing:2px}
+.geri-btn{position:absolute;left:15px;top:15px;background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.1)}
+
+/* Ana layout */
+.oyun-alan{display:flex;flex-direction:column;align-items:center;padding:10px;max-width:500px;margin:0 auto}
+@media(min-width:700px){.oyun-alan{flex-direction:row;align-items:flex-start;max-width:900px;gap:20px;padding:20px}}
+
+/* Karakter seçim ekranı */
+.karakter-sec{width:100%;text-align:center;padding:20px}
+.karakter-sec h2{font-size:22px;color:white;text-shadow:0 2px 8px rgba(255,100,150,0.5);margin-bottom:20px}
+.karakter-grid{display:flex;gap:15px;justify-content:center;flex-wrap:wrap}
+.karakter-secim-kart{background:white;border-radius:20px;padding:15px;cursor:pointer;transition:all 0.3s;box-shadow:0 5px 20px rgba(255,100,150,0.3);border:3px solid transparent;min-width:100px}
+.karakter-secim-kart:hover{transform:translateY(-5px) scale(1.05);border-color:#ff6b9d}
+.karakter-secim-kart .emoji{font-size:50px;display:block;margin-bottom:8px}
+.karakter-secim-kart .isim{font-size:13px;color:#ff6b9d;font-weight:bold}
+
+/* Karakter alanı */
+.karakter-alan{background:linear-gradient(180deg,#ffe0f0,#fff0f8);border-radius:25px;padding:15px;box-shadow:0 8px 30px rgba(255,100,150,0.2);position:relative;min-width:220px;text-align:center}
+.karakter-sahne{width:180px;height:280px;margin:0 auto;position:relative}
+.karakter-govde{font-size:120px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;transition:all 0.3s}
+.karakter-elbise{font-size:90px;position:absolute;top:55%;left:50%;transform:translate(-50%,-50%);z-index:2;transition:all 0.3s}
+.karakter-aksesuar{font-size:40px;position:absolute;top:15%;left:50%;transform:translate(-50%,-50%);z-index:3;transition:all 0.3s}
+.karakter-makyaj{font-size:35px;position:absolute;top:28%;left:60%;transform:translate(-50%,-50%);z-index:3;transition:all 0.3s}
+.karakter-isim{font-size:16px;color:#ff6b9d;font-weight:bold;margin-top:10px}
+
+/* Seçim paneli */
+.secim-panel{flex:1;width:100%}
+.kategori-tabs{display:flex;gap:8px;margin-bottom:12px;justify-content:center;flex-wrap:wrap}
+.tab-btn{background:rgba(255,255,255,0.6);border:2px solid rgba(255,107,157,0.3);border-radius:20px;padding:8px 15px;font-size:13px;cursor:pointer;transition:all 0.2s;font-family:inherit;color:#ff6b9d;font-weight:bold}
+.tab-btn.aktif{background:linear-gradient(135deg,#ff6b9d,#ff8cc8);color:white;border-color:transparent;box-shadow:0 3px 10px rgba(255,107,157,0.4)}
+
+.secim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:rgba(255,255,255,0.7);border-radius:20px;padding:12px;max-height:280px;overflow-y:auto}
+.secim-item{background:white;border-radius:12px;padding:8px;text-align:center;cursor:pointer;transition:all 0.2s;border:2px solid transparent;box-shadow:0 2px 8px rgba(255,100,150,0.1)}
+.secim-item:hover{transform:scale(1.1);border-color:#ff6b9d}
+.secim-item.aktif{border-color:#ff6b9d;background:#fff0f5;box-shadow:0 3px 12px rgba(255,107,157,0.3)}
+.secim-item .item-emoji{font-size:28px;display:block;margin-bottom:3px}
+.secim-item .item-isim{font-size:9px;color:#999}
+
+/* Butonlar */
+.buton-alan{display:flex;gap:10px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.aksiyon-btn{background:linear-gradient(135deg,#ff6b9d,#ff8cc8);border:none;border-radius:20px;padding:10px 20px;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(255,107,157,0.4);transition:all 0.2s;font-family:inherit}
+.aksiyon-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,157,0.5)}
+.aksiyon-btn.mor{background:linear-gradient(135deg,#a855f7,#c084fc)}
+.aksiyon-btn.yesil{background:linear-gradient(135deg,#34d399,#6ee7b7);color:#065f46}
+
+/* Fotoğraf modu */
+#foto-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center;flex-direction:column}
+.foto-cerceve{background:linear-gradient(135deg,#ff9a9e,#fecfef);border-radius:25px;padding:30px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.foto-karakter{font-size:80px;margin:10px 0;position:relative;display:inline-block}
+.foto-baslik{font-size:20px;color:white;font-weight:bold;margin-bottom:10px}
+.foto-isim{font-size:16px;color:rgba(255,255,255,0.8);margin:10px 0}
+.foto-btn-grup{display:flex;gap:10px;margin-top:15px;justify-content:center}
+</style>
+</head>
+<body>
+
+<!-- Karakter Seçim Ekranı -->
+<div id="karakter-sec-ekran">
+  <div class="header">
+    <button class="geri-btn" onclick="window.location.href='index.html'">🏠</button>
+    <h1>👗 Elbise Giydirme</h1>
+  </div>
+  <div class="karakter-sec">
+    <h2>✨ Karakterini Seç! ✨</h2>
+    <div class="karakter-grid">
+      <div class="karakter-secim-kart" onclick="karakterSec('prenses','👸','Prenses Ela')">
+        <span class="emoji">👸</span>
+        <div class="isim">Prenses Ela</div>
+      </div>
+      <div class="karakter-secim-kart" onclick="karakterSec('pop','👩‍🎤','Pop Yıldızı')">
+        <span class="emoji">👩‍🎤</span>
+        <div class="isim">Pop Yıldızı</div>
+      </div>
+      <div class="karakter-secim-kart" onclick="karakterSec('okul','👩‍🎓','Okul Kızı')">
+        <span class="emoji">👩‍🎓</span>
+        <div class="isim">Okul Kızı</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Oyun Ekranı -->
+<div id="oyun-ekran" style="display:none">
+  <div class="header">
+    <button class="geri-btn" onclick="karakterSecEkrani()">◀</button>
+    <h1>👗 Elbise Giydirme</h1>
+  </div>
+
+  <div class="oyun-alan">
+    <!-- Karakter -->
+    <div class="karakter-alan">
+      <div class="karakter-sahne">
+        <div class="karakter-govde" id="k-govde">👸</div>
+        <div class="karakter-elbise" id="k-elbise">👗</div>
+        <div class="karakter-aksesuar" id="k-aksesuar"></div>
+        <div class="karakter-makyaj" id="k-makyaj"></div>
+      </div>
+      <div class="karakter-isim" id="k-isim">Prenses Ela</div>
+    </div>
+
+    <!-- Seçim Paneli -->
+    <div class="secim-panel">
+      <div class="kategori-tabs">
+        <button class="tab-btn aktif" onclick="tab('elbise',this)">👗 Elbise</button>
+        <button class="tab-btn" onclick="tab('aksesuar',this)">💍 Aksesuar</button>
+        <button class="tab-btn" onclick="tab('makyaj',this)">💄 Makyaj</button>
+      </div>
+
+      <!-- Elbiseler -->
+      <div id="tab-elbise" class="secim-grid"></div>
+
+      <!-- Aksesuarlar -->
+      <div id="tab-aksesuar" class="secim-grid" style="display:none"></div>
+
+      <!-- Makyaj -->
+      <div id="tab-makyaj" class="secim-grid" style="display:none"></div>
+
+      <div class="buton-alan">
+        <button class="aksiyon-btn mor" onclick="temizle()">🗑️ Temizle</button>
+        <button class="aksiyon-btn" onclick="fotoCek()">📸 Fotoğraf Çek</button>
+        <button class="aksiyon-btn yesil" onclick="rastgele()">🎲 Rastgele</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fotoğraf Modal -->
+<div id="foto-modal">
+  <div class="foto-cerceve">
+    <div class="foto-baslik">✨ Harika Görünüyorsun! ✨</div>
+    <div class="foto-karakter">
+      <span id="foto-govde" style="font-size:80px"></span>
+      <span id="foto-elbise" style="font-size:60px;position:absolute;top:20px;left:10px"></span>
+      <span id="foto-aksesuar" style="font-size:30px;position:absolute;top:-10px;left:25px"></span>
+    </div>
+    <div class="foto-isim" id="foto-isim-text"></div>
+    <div class="foto-btn-grup">
+      <button class="aksiyon-btn" onclick="modalKapat()">💗 Teşekkürler!</button>
+      <button class="aksiyon-btn mor" onclick="paylas()">🔗 Paylaş</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const elbiseler=[
+  {emoji:'👗',isim:'Elbise'},
+  {emoji:'👘',isim:'Kimono'},
+  {emoji:'🥻',isim:'Sari'},
+  {emoji:'👙',isim:'Bikini'},
+  {emoji:'🩱',isim:'Mayo'},
+  {emoji:'🩴',isim:'Terlik'},
+  {emoji:'👚',isim:'Tişört'},
+  {emoji:'🧥',isim:'Palto'},
+  {emoji:'🥼',isim:'Önlük'},
+  {emoji:'🩳',isim:'Şort'},
+  {emoji:'👖',isim:'Pantolon'},
+  {emoji:'🩲',isim:'İç'},
+  {emoji:'🧣',isim:'Atkı'},
+  {emoji:'🧤',isim:'Eldiven'},
+  {emoji:'🧦',isim:'Çorap'},
+  {emoji:'👠',isim:'Topuklu'},
+  {emoji:'👡',isim:'Sandalet'},
+  {emoji:'👢',isim:'Bot'},
+  {emoji:'🩰',isim:'Bale'},
+  {emoji:'👟',isim:'Spor'},
+];
+
+const aksesuarlar=[
+  {emoji:'👑',isim:'Taç'},
+  {emoji:'💍',isim:'Yüzük'},
+  {emoji:'📿',isim:'Kolye'},
+  {emoji:'💎',isim:'Elmas'},
+  {emoji:'🎀',isim:'Fiyonk'},
+  {emoji:'🌸',isim:'Çiçek'},
+  {emoji:'⭐',isim:'Yıldız'},
+  {emoji:'🌺',isim:'Gül'},
+  {emoji:'🦋',isim:'Kelebek'},
+  {emoji:'🌈',isim:'Gökkuşağı'},
+  {emoji:'💫',isim:'Parıltı'},
+  {emoji:'🌙',isim:'Ay'},
+  {emoji:'🎭',isim:'Maske'},
+  {emoji:'🪄',isim:'Sihir'},
+  {emoji:'🌟',isim:'Parlak'},
+  {emoji:'💜',isim:'Kalp'},
+];
+
+const makyajlar=[
+  {emoji:'💄',isim:'Ruj'},
+  {emoji:'💅',isim:'Oje'},
+  {emoji:'👄',isim:'Dudak'},
+  {emoji:'💋',isim:'Öpücük'},
+  {emoji:'🌹',isim:'Allık'},
+  {emoji:'✨',isim:'Işıltı'},
+  {emoji:'🎨',isim:'Makyaj'},
+  {emoji:'🌸',isim:'Pembe'},
+  {emoji:'💗',isim:'Kalp'},
+  {emoji:'🦄',isim:'Unicorn'},
+  {emoji:'🌟',isim:'Yıldız'},
+  {emoji:'🎀',isim:'Fiyonk'},
+];
+
+let seciliKarakter={govde:'👸',isim:'Prenses Ela'};
+let seciliEkran='elbise';
+
+function karakterSec(tip,emoji,isim){
+  seciliKarakter={govde:emoji,isim:isim};
+  document.getElementById('karakter-sec-ekran').style.display='none';
+  document.getElementById('oyun-ekran').style.display='block';
+  document.getElementById('k-govde').textContent=emoji;
+  document.getElementById('k-isim').textContent=isim;
+  tabOlustur();
+  pariltaEkle();
+}
+
+function karakterSecEkrani(){
+  document.getElementById('karakter-sec-ekran').style.display='block';
+  document.getElementById('oyun-ekran').style.display='none';
+}
+
+function tabOlustur(){
+  // Elbiseler
+  const eg=document.getElementById('tab-elbise');
+  eg.innerHTML=elbiseler.map((e,i)=>`
+    <div class="secim-item" onclick="elbiseSec('${e.emoji}',this)">
+      <span class="item-emoji">${e.emoji}</span>
+      <span class="item-isim">${e.isim}</span>
+    </div>
+  `).join('');
+
+  // Aksesuarlar
+  const ag=document.getElementById('tab-aksesuar');
+  ag.innerHTML=aksesuarlar.map((a,i)=>`
+    <div class="secim-item" onclick="aksesuarSec('${a.emoji}',this)">
+      <span class="item-emoji">${a.emoji}</span>
+      <span class="item-isim">${a.isim}</span>
+    </div>
+  `).join('');
+
+  // Makyaj
+  const mg=document.getElementById('tab-makyaj');
+  mg.innerHTML=makyajlar.map((m,i)=>`
+    <div class="secim-item" onclick="makyajSec('${m.emoji}',this)">
+      <span class="item-emoji">${m.emoji}</span>
+      <span class="item-isim">${m.isim}</span>
+    </div>
+  `).join('');
+}
+
+function tab(isim,btn){
+  document.querySelectorAll('.secim-grid').forEach(g=>g.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('aktif'));
+  document.getElementById('tab-'+isim).style.display='grid';
+  btn.classList.add('aktif');
+  seciliEkran=isim;
+}
+
+function elbiseSec(emoji,el){
+  document.getElementById('k-elbise').textContent=emoji;
+  document.querySelectorAll('#tab-elbise .secim-item').forEach(x=>x.classList.remove('aktif'));
+  el.classList.add('aktif');
+  pariltaEkle();
+}
+
+function aksesuarSec(emoji,el){
+  document.getElementById('k-aksesuar').textContent=emoji;
+  document.querySelectorAll('#tab-aksesuar .secim-item').forEach(x=>x.classList.remove('aktif'));
+  el.classList.add('aktif');
+  pariltaEkle();
+}
+
+function makyajSec(emoji,el){
+  document.getElementById('k-makyaj').textContent=emoji;
+  document.querySelectorAll('#tab-makyaj .secim-item').forEach(x=>x.classList.remove('aktif'));
+  el.classList.add('aktif');
+  pariltaEkle();
+}
+
+function temizle(){
+  document.getElementById('k-elbise').textContent='👗';
+  document.getElementById('k-aksesuar').textContent='';
+  document.getElementById('k-makyaj').textContent='';
+  document.querySelectorAll('.secim-item').forEach(x=>x.classList.remove('aktif'));
+  pariltaEkle();
+}
+
+function rastgele(){
+  const re=elbiseler[Math.floor(Math.random()*elbiseler.length)];
+  const ra=aksesuarlar[Math.floor(Math.random()*aksesuarlar.length)];
+  const rm=makyajlar[Math.floor(Math.random()*makyajlar.length)];
+  document.getElementById('k-elbise').textContent=re.emoji;
+  document.getElementById('k-aksesuar').textContent=ra.emoji;
+  document.getElementById('k-makyaj').textContent=rm.emoji;
+  pariltaEkle();
+  pariltaEkle();
+  pariltaEkle();
+}
+
+function fotoCek(){
+  document.getElementById('foto-govde').textContent=document.getElementById('k-govde').textContent;
+  document.getElementById('foto-elbise').textContent=document.getElementById('k-elbise').textContent;
+  document.getElementById('foto-aksesuar').textContent=document.getElementById('k-aksesuar').textContent;
+  document.getElementById('foto-isim-text').textContent='💗 '+seciliKarakter.isim+' hazır! 💗';
+  document.getElementById('foto-modal').style.display='flex';
+  for(let i=0;i<10;i++)setTimeout(()=>pariltaEkle(),i*100);
+}
+
+function modalKapat(){
+  document.getElementById('foto-modal').style.display='none';
+}
+
+function paylas(){
+  if(navigator.share){
+    navigator.share({title:'Oyun Dünyası',text:'Harika bir kıyafet kombinim var! 👗✨',url:window.location.href});
+  }else{
+    alert('💗 Harika kombinini arkadaşlarınla paylaş!\n\n'+window.location.href);
+  }
+}
+
+function pariltaEkle(){
+  const emojiler=['✨','💗','🌸','⭐','💫','🦋','🌟'];
+  const p=document.createElement('div');
+  p.className='parıltı';
+  p.textContent=emojiler[Math.floor(Math.random()*emojiler.length)];
+  p.style.left=Math.random()*80+10+'%';
+  p.style.top=Math.random()*80+10+'%';
+  document.body.appendChild(p);
+  setTimeout(()=>p.remove(),2000);
+}
+
+// Sayfa açılışında parıltı
+for(let i=0;i<5;i++)setTimeout(()=>pariltaEkle(),i*200);
+</script>
+</body>
+</html>
