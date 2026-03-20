@@ -47,8 +47,13 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 
 <div class="oyun-grid">
 
-  <a href="elbise-giydirme.html" class="oyun-kart pembe">
+  <a href="tamagotchi-bebek.html" class="oyun-kart pembe">
     <span class="kart-yeni">YENİ</span>
+    <span class="kart-emoji">🍼</span>
+    <div class="kart-isim">Bebek<br>Bakımı</div>
+  </a>
+
+  <a href="elbise-giydirme.html" class="oyun-kart pembe">
     <span class="kart-emoji">👗</span>
     <div class="kart-isim">Elbise<br>Giydirme</div>
   </a>
@@ -131,8 +136,7 @@ function konfeti(){
     k.style.borderRadius=Math.random()>0.5?'50%':'0';
     k.style.animationDuration=(1+Math.random()*2)+'s';
     k.style.animationDelay=Math.random()*0.5+'s';
-    document.body.appendChild(k);
-    setTimeout(()=>k.remove(),3000);
+    document.body.appendChild(k);setTimeout(()=>k.remove(),3000);
   }
 }
 </script>

@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bebek Tamagotchi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fef6f0;
+    --card: #ffffff;
+    --pink: #ff85a1;
+    --blue: #74b9ff;
+    --purple: #a29bfe;
+    --green: #55efc4;
+    --yellow: #ffeaa7;
+    --orange: #fdcb6e;
+    --red: #ff7675;
+    --text: #2d3436;
+    --subtext: #636e72;
+    --shadow: 0 8px 32px rgba(0,0,0,0.10);
+    --radius: 24px;
+    --accent: #ff85a1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, #ffd6e7 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, #d6eaff 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, #fff3e0 0%, transparent 60%);
+    z-index: -1;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; width: 100%; max-width: 420px; }
+  .screen.active { display: block; }
+
+  /* ── WELCOME ── */
+  #welcome-screen {
+    text-align: center;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+    box-shadow: var(--shadow);
+  }
+  #welcome-screen h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem;
+    color: var(--pink);
+    margin-bottom: 8px;
+  }
+  #welcome-screen p {
+    color: var(--subtext);
+    margin-bottom: 32px;
+    font-size: 1rem;
+  }
+  .gender-select { display: flex; gap: 16px; justify-content: center; margin-bottom: 28px; }
+  .gender-btn {
+    flex: 1;
+    max-width: 150px;
+    padding: 20px 12px;
+    border: 3px solid transparent;
+    border-radius: 20px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 3rem;
+  }
+  .gender-btn span { display: block; font-family: 'Fredoka One', cursive; font-size: 1rem; margin-top: 8px; }
+  .gender-btn.girl span { color: var(--pink); }
+  .gender-btn.boy span { color: var(--blue); }
+  .gender-btn:hover, .gender-btn.selected { transform: scale(1.05); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+  .gender-btn.girl.selected { border-color: var(--pink); background: #fff0f5; }
+  .gender-btn.boy.selected { border-color: var(--blue); background: #f0f6ff; }
+
+  .name-input-wrap { margin-bottom: 24px; }
+  .name-input-wrap label { display: block; font-weight: 700; color: var(--text); margin-bottom: 8px; font-size: 0.95rem; }
+  .name-input-wrap input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2.5px solid #e0e0e0;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    color: var(--text);
+  }
+  .name-input-wrap input:focus { border-color: var(--pink); }
+
+  .start-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(255,133,161,0.4);
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,133,161,0.5); }
+  .start-btn:active { transform: translateY(0); }
+
+  /* ── MAIN GAME ── */
+  #game-screen { max-width: 420px; }
+
+  .game-header {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .baby-name-age { display: flex; flex-direction: column; }
+  .baby-name-age .name { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: var(--text); }
+  .baby-name-age .age-stage { font-size: 0.82rem; color: var(--subtext); font-weight: 600; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .coin-display { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--orange); }
+  .time-display { font-size: 0.75rem; color: var(--subtext); }
+
+  /* Character viewport */
+  .char-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+  }
+  .room-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    z-index: 0;
+  }
+  .room-floor {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .char-container {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+  }
+  .baby-svg { transition: transform 0.3s; }
+  .baby-svg:hover { transform: scale(1.05); }
+
+  .mood-bubble {
+    position: absolute;
+    top: 10px; right: 20px;
+    background: white;
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    z-index: 3;
+    animation: float 2s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .stage-badge {
+    position: absolute;
+    top: 10px; left: 20px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    z-index: 3;
+  }
+
+  /* Status bars */
+  .stats-grid {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 4px; }
+  .stat-label { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: 700; color: var(--subtext); }
+  .stat-bar-bg { height: 10px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+  .stat-bar-fill.hunger { background: linear-gradient(90deg, #fdcb6e, #e17055); }
+  .stat-bar-fill.happy { background: linear-gradient(90deg, #ffeaa7, #fdcb6e); }
+  .stat-bar-fill.energy { background: linear-gradient(90deg, #74b9ff, #a29bfe); }
+  .stat-bar-fill.health { background: linear-gradient(90deg, #55efc4, #00b894); }
+  .stat-bar-fill.hygiene { background: linear-gradient(90deg, #a29bfe, #6c5ce7); }
+  .stat-bar-fill.xp { background: linear-gradient(90deg, var(--pink), var(--purple)); }
+
+  /* Growth bar */
+  .growth-bar-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .growth-label { font-size: 0.82rem; font-weight: 700; color: var(--subtext); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .growth-bar-bg { height: 14px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+  .growth-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--pink), var(--purple), var(--blue)); transition: width 0.8s ease; }
+
+  /* Action buttons */
+  .actions-grid {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 6px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    background: #f8f9fa;
+    gap: 5px;
+    font-family: 'Nunito', sans-serif;
+  }
+  .action-btn:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+  .action-btn:active:not(:disabled) { transform: scale(0.95); }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .action-btn .icon { font-size: 1.5rem; }
+  .action-btn .lbl { font-size: 0.68rem; font-weight: 700; color: var(--subtext); }
+  .action-btn.feed { background: #fff8e1; }
+  .action-btn.play { background: #fff0f5; }
+  .action-btn.sleep { background: #f0f4ff; }
+  .action-btn.medicine { background: #f0fff8; }
+  .action-btn.walk { background: #f0fff4; }
+  .action-btn.bath { background: #f0f8ff; }
+  .action-btn.school { background: #fff9f0; }
+  .action-btn.study { background: #f5f0ff; }
+  .action-btn.on { box-shadow: 0 0 0 3px var(--pink) inset; }
+
+  /* Notification */
+  .notif-bar {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    border-radius: 14px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-align: center;
+    display: none;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 4px 16px rgba(255,133,161,0.3);
+  }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Activity overlay */
+  .activity-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .activity-overlay.active { display: flex; }
+  .activity-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    max-width: 340px;
+    width: 100%;
+    animation: popIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+  .activity-card h3 { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--text); margin-bottom: 8px; }
+  .activity-card p { color: var(--subtext); margin-bottom: 20px; font-size: 0.9rem; }
+  .activity-emoji { font-size: 4rem; margin-bottom: 12px; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-bg { height: 16px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 10px; transition: width 0.1s linear; }
+  .close-activity {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  /* School screen */
+  #school-screen {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+  #school-screen h2 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: var(--text); margin-bottom: 16px; text-align: center; }
+  .school-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .school-subject {
+    padding: 16px;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s;
+    border: 2px solid transparent;
+  }
+  .school-subject:hover { transform: scale(1.04); }
+  .school-subject .s-icon { font-size: 2rem; margin-bottom: 6px; }
+  .school-subject .s-name { font-weight: 700; font-size: 0.85rem; color: var(--text); }
+  .school-subject .s-xp { font-size: 0.75rem; color: var(--subtext); }
+  .back-btn {
+    width: 100%;
+    padding: 12px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--subtext);
+  }
+
+  /* Game mini */
+  .mini-game-wrap { margin-bottom: 12px; }
+  .mini-game-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Death/reset */
+  #dead-screen {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  #dead-screen .dead-emoji { font-size: 5rem; margin-bottom: 16px; }
+  #dead-screen h2 { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: var(--text); margin-bottom: 8px; }
+  #dead-screen p { color: var(--subtext); margin-bottom: 24px; }
+  #dead-screen button {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  /* Sleeping overlay on char */
+  .zzz { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); font-size: 1.5rem; animation: zzz 1.5s ease-in-out infinite; display: none; }
+  @keyframes zzz { 0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.8); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(1.2); } }
+
+  /* Alert badges on buttons */
+  .action-btn { position: relative; }
+  .alert-dot {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 10px; height: 10px;
+    background: var(--red);
+    border-radius: 50%;
+    display: none;
+  }
+
+  @media (max-width: 380px) {
+    .actions-grid { grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .action-btn { padding: 10px 4px; }
+    .action-btn .icon { font-size: 1.25rem; }
+    .action-btn .lbl { font-size: 0.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="welcome-screen" class="screen active">
+  <h1>👶 Bebek Bakımı</h1>
+  <p>Bebeğini seç, adını ver ve büyüt!</p>
+  <div class="gender-select">
+    <button class="gender-btn girl" onclick="selectGender('girl')">
+      👧 <span>Kız Bebek</span>
+    </button>
+    <button class="gender-btn boy" onclick="selectGender('boy')">
+      👦 <span>Erkek Bebek</span>
+    </button>
+  </div>
+  <div class="name-input-wrap">
+    <label>Bebeğinin adı:</label>
+    <input type="text" id="baby-name-input" placeholder="Adını yaz..." maxlength="14">
+  </div>
+  <button class="start-btn" onclick="startGame()">🍼 Bebeğimi Doğur!</button>
+</div>
+
+<!-- MAIN GAME -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div class="baby-name-age">
+      <span class="name" id="hdr-name">Bebek</span>
+      <span class="age-stage" id="hdr-stage">Yenidoğan • Gün 1</span>
+    </div>
+    <div class="header-right">
+      <span class="coin-display" id="coin-display">🪙 0</span>
+      <span class="time-display" id="time-display"></span>
+    </div>
+  </div>
+
+  <div id="notif-bar" class="notif-bar"></div>
+
+  <div class="char-wrap">
+    <div class="room-bg" id="room-bg"></div>
+    <div class="stage-badge" id="stage-badge">Yenidoğan</div>
+    <div class="mood-bubble" id="mood-bubble">😊</div>
+    <div class="char-container">
+      <div class="zzz" id="zzz-anim">💤</div>
+      <div id="baby-svg-wrap"></div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-label">🍼 Açlık</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill hunger" id="bar-hunger"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">😊 Mutluluk</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill happy" id="bar-happy"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">⚡ Enerji</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill energy" id="bar-energy"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">❤️ Sağlık</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill health" id="bar-health"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">🛁 Temizlik</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill hygiene" id="bar-hygiene"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">⭐ XP</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill xp" id="bar-xp"></div></div>
+    </div>
+  </div>
+
+  <div class="growth-bar-wrap">
+    <div class="growth-label">
+      <span>📈 Büyüme</span>
+      <span id="growth-pct">0%</span>
+    </div>
+    <div class="growth-bar-bg"><div class="growth-bar-fill" id="bar-growth"></div></div>
+  </div>
+
+  <div class="actions-grid">
+    <button class="action-btn feed" onclick="doAction('feed')" id="btn-feed">
+      <div class="alert-dot" id="alert-feed"></div>
+      <span class="icon">🍼</span><span class="lbl">Besle</span>
+    </button>
+    <button class="action-btn play" onclick="doAction('play')" id="btn-play">
+      <span class="icon">🎮</span><span class="lbl">Oyna</span>
+    </button>
+    <button class="action-btn sleep" onclick="doAction('sleep')" id="btn-sleep">
+      <div class="alert-dot" id="alert-sleep"></div>
+      <span class="icon">🌙</span><span class="lbl">Uyut</span>
+    </button>
+    <button class="action-btn medicine" onclick="doAction('medicine')" id="btn-medicine">
+      <div class="alert-dot" id="alert-medicine"></div>
+      <span class="icon">💊</span><span class="lbl">İlaç</span>
+    </button>
+    <button class="action-btn walk" onclick="doAction('walk')" id="btn-walk">
+      <span class="icon">🌳</span><span class="lbl">Gezdır</span>
+    </button>
+    <button class="action-btn bath" onclick="doAction('bath')" id="btn-bath">
+      <div class="alert-dot" id="alert-bath"></div>
+      <span class="icon">🛁</span><span class="lbl">Banyo</span>
+    </button>
+    <button class="action-btn school" onclick="goToSchool()" id="btn-school" disabled>
+      <span class="icon">🏫</span><span class="lbl">Okul</span>
+    </button>
+    <button class="action-btn study" onclick="doAction('study')" id="btn-study" disabled>
+      <span class="icon">📚</span><span class="lbl">Ders</span>
+    </button>
+  </div>
+</div>
+
+<!-- SCHOOL -->
+<div id="school-screen" class="screen">
+  <h2>🏫 Okul</h2>
+  <div class="school-grid">
+    <div class="school-subject" style="background:#fff8e1;" onclick="doSubject('math')">
+      <div class="s-icon">🔢</div>
+      <div class="s-name">Matematik</div>
+      <div class="s-xp">+15 XP</div>
+    </div>
+    <div class="school-subject" style="background:#f0fff8;" onclick="doSubject('science')">
+      <div class="s-icon">🔬</div>
+      <div class="s-name">Fen</div>
+      <div class="s-xp">+15 XP</div>
+    </div>
+    <div class="school-subject" style="background:#f0f4ff;" onclick="doSubject('art')">
+      <div class="s-icon">🎨</div>
+      <div class="s-name">Resim</div>
+      <div class="s-xp">+10 XP</div>
+    </div>
+    <div class="school-subject" style="background:#fff0f5;" onclick="doSubject('music')">
+      <div class="s-icon">🎵</div>
+      <div class="s-name">Müzik</div>
+      <div class="s-xp">+10 XP</div>
+    </div>
+    <div class="school-subject" style="background:#f5f0ff;" onclick="doSubject('pe')">
+      <div class="s-icon">⚽</div>
+      <div class="s-name">Beden</div>
+      <div class="s-xp">+12 XP</div>
+    </div>
+    <div class="school-subject" style="background:#f0fffe;" onclick="doSubject('reading')">
+      <div class="s-icon">📖</div>
+      <div class="s-name">Okuma</div>
+      <div class="s-xp">+12 XP</div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="backToGame()">← Geri Dön</button>
+</div>
+
+<!-- DEAD -->
+<div id="dead-screen" class="screen">
+  <div class="dead-emoji">😢</div>
+  <h2 id="dead-title">Bebek Hastalandı!</h2>
+  <p id="dead-msg">Bebeğine daha iyi bakmayı unutma...</p>
+  <button onclick="resetGame()">🔄 Yeniden Başla</button>
+</div>
+
+<!-- Activity overlay -->
+<div class="activity-overlay" id="activity-overlay">
+  <div class="activity-card">
+    <div class="activity-emoji" id="act-emoji">🍼</div>
+    <h3 id="act-title">Besleniyor...</h3>
+    <p id="act-desc">Bebek besleniyor</p>
+    <div class="progress-wrap">
+      <div class="progress-bg"><div class="progress-fill" id="act-progress" style="width:0%"></div></div>
+    </div>
+    <button class="close-activity" id="act-close" style="display:none" onclick="closeActivity()">✅ Tamam!</button>
+  </div>
+</div>
+
+<script>
+// ─── STAGES ───────────────────────────────────────────────
+const STAGES = [
+  { name: 'Yenidoğan', days: 0,  emoji: '👶', school: false },
+  { name: 'Bebek',     days: 3,  emoji: '🍼', school: false },
+  { name: 'Çocuk',     days: 10, emoji: '🧒', school: true  },
+  { name: 'Okul Çağı', days: 20, emoji: '🎒', school: true  },
+  { name: 'Genç',      days: 40, emoji: '🧑', school: true  },
+];
+
+// ─── ROOM THEMES ──────────────────────────────────────────
+const ROOMS = [
+  { bg: 'linear-gradient(180deg,#e8f4f8 60%,#c8e6c9 100%)', floor: '#c8e6c9' },
+  { bg: 'linear-gradient(180deg,#fce4ec 60%,#f8bbd0 100%)', floor: '#f8bbd0' },
+  { bg: 'linear-gradient(180deg,#e8eaf6 60%,#c5cae9 100%)', floor: '#c5cae9' },
+  { bg: 'linear-gradient(180deg,#fff9c4 60%,#fff59d 100%)', floor: '#fff59d' },
+  { bg: 'linear-gradient(180deg,#e0f7fa 60%,#b2ebf2 100%)', floor: '#b2ebf2' },
+];
+
+// ─── STATE ────────────────────────────────────────────────
+let state = null;
+let ticker = null;
+let actTimer = null;
+let lastSave = Date.now();
+
+const DEFAULT = {
+  name: 'Bebek',
+  gender: 'girl',
+  hunger: 80,
+  happy: 80,
+  energy: 80,
+  health: 100,
+  hygiene: 80,
+  xp: 0,
+  coins: 0,
+  daysBorn: 0,        // real-time days
+  birthTime: null,
+  lastTick: null,
+  sleeping: false,
+  sick: false,
+  dead: false,
+  stage: 0,
+  todaySubjects: [],  // subjects done today
+};
+
+function loadGame() {
+  const saved = localStorage.getItem('tamagotchi_baby_v2');
+  if (saved) {
+    try {
+      state = JSON.parse(saved);
+      if (!state.birthTime) state.birthTime = Date.now();
+      if (!state.lastTick) state.lastTick = Date.now();
+      return true;
+    } catch(e) {}
+  }
+  return false;
+}
+
+function saveGame() {
+  localStorage.setItem('tamagotchi_baby_v2', JSON.stringify(state));
+}
+
+function resetGame() {
+  localStorage.removeItem('tamagotchi_baby_v2');
+  location.reload();
+}
+
+// ─── GENDER SELECT ────────────────────────────────────────
+let selectedGender = null;
+function selectGender(g) {
+  selectedGender = g;
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.gender-btn.' + g).classList.add('selected');
+  document.getElementById('baby-name-input').focus();
+}
+
+// ─── START ────────────────────────────────────────────────
+function startGame() {
+  if (!selectedGender) { notify('Lütfen cinsiyet seç! 👆'); return; }
+  const nameVal = document.getElementById('baby-name-input').value.trim() || 'Bebek';
+  state = Object.assign({}, DEFAULT, {
+    name: nameVal,
+    gender: selectedGender,
+    birthTime: Date.now(),
+    lastTick: Date.now(),
+    todaySubjects: [],
+  });
+  saveGame();
+  showGameScreen();
+}
+
+// ─── SHOW SCREENS ─────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showGameScreen() { showScreen('game-screen'); startTicker(); render(); }
+function backToGame() { showScreen('game-screen'); }
+function goToSchool() {
+  if (state.energy < 20) { notify('Çok yorgun, önce uyusun! 😴'); return; }
+  showScreen('school-screen');
+}
+
+// ─── TICKER ───────────────────────────────────────────────
+function startTicker() {
+  if (ticker) clearInterval(ticker);
+  ticker = setInterval(tick, 10000); // every 10s
+}
+
+function tick() {
+  if (!state || state.dead) return;
+  const now = Date.now();
+  const elapsed = (now - state.lastTick) / 1000; // seconds since last tick
+  state.lastTick = now;
+
+  // Real-time: 1 real day = 1 game day
+  const elapsedDays = elapsed / 86400;
+  state.daysBorn = (now - state.birthTime) / 86400000;
+
+  // Update stage
+  updateStage();
+
+  if (state.sleeping) {
+    // while sleeping, only energy recovers
+    state.energy = Math.min(100, state.energy + elapsed * 0.015);
+    state.health = Math.min(100, state.health + elapsed * 0.005);
+    if (state.energy >= 100) {
+      state.sleeping = false;
+      notify(state.name + ' uyandı! 🌅');
+    }
+  } else {
+    // Decay per second (tuned for real-time feel)
+    state.hunger  = Math.max(0, state.hunger  - elapsed * 0.008);
+    state.happy   = Math.max(0, state.happy   - elapsed * 0.005);
+    state.energy  = Math.max(0, state.energy  - elapsed * 0.004);
+    state.hygiene = Math.max(0, state.hygiene - elapsed * 0.003);
+
+    // Sickness check
+    if (state.hunger < 15 || state.hygiene < 15) {
+      state.sick = true;
+    }
+    if (state.sick) {
+      state.health = Math.max(0, state.health - elapsed * 0.008);
+    } else {
+      state.health = Math.min(100, state.health + elapsed * 0.001);
+    }
+
+    // Growth XP over time
+    state.xp = Math.min(100, state.xp + elapsed * 0.004);
+  }
+
+  // Alert checks
+  checkAlerts();
+
+  // Death
+  if (state.health <= 0) {
+    state.dead = true;
+    saveGame();
+    showDead();
+    return;
+  }
+
+  saveGame();
+  render();
+}
+
+function updateStage() {
+  const days = state.daysBorn;
+  let newStage = 0;
+  for (let i = STAGES.length - 1; i >= 0; i--) {
+    if (days >= STAGES[i].days) { newStage = i; break; }
+  }
+  if (newStage !== state.stage) {
+    state.stage = newStage;
+    notify('🎉 ' + state.name + ' büyüdü! ' + STAGES[newStage].name + ' oldu!');
+  }
+}
+
+function checkAlerts() {
+  document.getElementById('alert-feed').style.display     = state.hunger  < 30 ? 'block' : 'none';
+  document.getElementById('alert-sleep').style.display    = state.energy  < 20 ? 'block' : 'none';
+  document.getElementById('alert-medicine').style.display = state.sick            ? 'block' : 'none';
+  document.getElementById('alert-bath').style.display     = state.hygiene < 30 ? 'block' : 'none';
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────
+const ACTIONS = {
+  feed:     { emoji:'🍼', title:'Besleniyor...', desc:'Bebek iştahla içiyor!', duration:4000,
+              fn: () => { state.hunger = Math.min(100,state.hunger+35); state.happy = Math.min(100,state.happy+5); state.xp = Math.min(100,state.xp+3); state.coins+=2; } },
+  play:     { emoji:'🎈', title:'Oynuyor!', desc:'Ne kadar eğleniyorlar!', duration:5000,
+              fn: () => { state.happy = Math.min(100,state.happy+30); state.energy = Math.max(0,state.energy-10); state.xp = Math.min(100,state.xp+5); state.coins+=3; } },
+  sleep:    { emoji:'😴', title:'Uyutuluyor...', desc:'Şşş, bebek uyuyor...', duration:3000,
+              fn: () => { state.sleeping = true; notify(state.name + ' uykuya daldı 😴'); } },
+  medicine: { emoji:'💊', title:'İlaç veriliyor...', desc:'Bebek iyileşiyor!', duration:4000,
+              fn: () => { state.sick = false; state.health = Math.min(100,state.health+40); state.xp = Math.min(100,state.xp+2); } },
+  walk:     { emoji:'🌳', title:'Gezmeye çıkıldı!', desc:'Taze hava çok iyi geliyor!', duration:6000,
+              fn: () => { state.happy = Math.min(100,state.happy+25); state.energy = Math.max(0,state.energy-8); state.health = Math.min(100,state.health+10); state.xp = Math.min(100,state.xp+6); state.coins+=4; } },
+  bath:     { emoji:'🛁', title:'Banyo zamanı!', desc:'Temizlik sağlıktır!', duration:5000,
+              fn: () => { state.hygiene = Math.min(100,state.hygiene+50); state.happy = Math.min(100,state.happy+10); state.sick = (state.hunger<15); state.xp = Math.min(100,state.xp+4); state.coins+=2; } },
+  study:    { emoji:'📚', title:'Ders çalışıyor...', desc:'Zekâ gelişiyor!', duration:7000,
+              fn: () => { state.xp = Math.min(100,state.xp+15); state.happy = Math.max(0,state.happy-5); state.energy = Math.max(0,state.energy-12); state.coins+=5; } },
+};
+
+function doAction(key) {
+  if (state.sleeping && key !== 'feed') { notify('Önce uyansın! 😴'); return; }
+  const a = ACTIONS[key];
+  if (!a) return;
+  showActivity(a.emoji, a.title, a.desc, a.duration, () => {
+    a.fn();
+    checkAlerts();
+    saveGame();
+    render();
+  });
+}
+
+function doSubject(sub) {
+  const xpMap = { math:15, science:15, art:10, music:10, pe:12, reading:12 };
+  if (state.todaySubjects && state.todaySubjects.includes(sub)) {
+    notify('Bu dersi bugün yaptı! Yarın tekrar! 📅'); return;
+  }
+  if (state.energy < 15) { notify('Çok yorgun! Önce dinlenmeli. 😴'); return; }
+  if (!state.todaySubjects) state.todaySubjects = [];
+  state.todaySubjects.push(sub);
+  const names = { math:'Matematik', science:'Fen', art:'Resim', music:'Müzik', pe:'Beden', reading:'Okuma' };
+  showActivity('🏫', names[sub] + ' dersi!', 'Öğreniyoruz...', 8000, () => {
+    state.xp = Math.min(100, state.xp + xpMap[sub]);
+    state.energy = Math.max(0, state.energy - 15);
+    state.happy = Math.max(0, state.happy - 5);
+    state.coins += 8;
+    saveGame();
+    render();
+    notify('Aferin! ' + names[sub] + ' dersi bitti! +' + xpMap[sub] + ' XP 🌟');
+  });
+}
+
+// ─── ACTIVITY OVERLAY ─────────────────────────────────────
+function showActivity(emoji, title, desc, duration, cb) {
+  document.getElementById('act-emoji').textContent = emoji;
+  document.getElementById('act-title').textContent = title;
+  document.getElementById('act-desc').textContent = desc;
+  document.getElementById('act-progress').style.width = '0%';
+  document.getElementById('act-close').style.display = 'none';
+  document.getElementById('activity-overlay').classList.add('active');
+
+  let start = Date.now();
+  actTimer = setInterval(() => {
+    const pct = Math.min(100, ((Date.now() - start) / duration) * 100);
+    document.getElementById('act-progress').style.width = pct + '%';
+    if (pct >= 100) {
+      clearInterval(actTimer);
+      document.getElementById('act-close').style.display = 'inline-block';
+      if (cb) cb();
+    }
+  }, 50);
+}
+
+function closeActivity() {
+  document.getElementById('activity-overlay').classList.remove('active');
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function render() {
+  if (!state) return;
+  const stageInfo = STAGES[state.stage];
+
+  document.getElementById('hdr-name').textContent = state.name;
+  document.getElementById('hdr-stage').textContent =
+    stageInfo.name + ' • Gün ' + Math.floor(state.daysBorn);
+  document.getElementById('stage-badge').textContent = stageInfo.name;
+  document.getElementById('coin-display').textContent = '🪙 ' + Math.floor(state.coins);
+
+  const now = new Date();
+  document.getElementById('time-display').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  // Bars
+  const bars = ['hunger','happy','energy','health','hygiene','xp'];
+  bars.forEach(b => {
+    document.getElementById('bar-'+b).style.width = Math.round(state[b]) + '%';
+  });
+
+  // Growth
+  const nextStageIdx = Math.min(state.stage + 1, STAGES.length - 1);
+  const curDays = STAGES[state.stage].days;
+  const nxtDays = STAGES[nextStageIdx].days;
+  let growthPct = 0;
+  if (state.stage < STAGES.length - 1) {
+    growthPct = Math.min(100, ((state.daysBorn - curDays) / (nxtDays - curDays)) * 100);
+  } else { growthPct = 100; }
+  document.getElementById('bar-growth').style.width = growthPct.toFixed(1) + '%';
+  document.getElementById('growth-pct').textContent = growthPct.toFixed(1) + '%';
+
+  // Mood bubble
+  const moods = [
+    [80, state.sleeping ? '😴' : '😁'],
+    [60, '😊'],
+    [40, '😐'],
+    [20, '😟'],
+    [0,  '😢'],
+  ];
+  const avg = (state.happy + state.hunger + state.energy + state.health) / 4;
+  let mood = '😢';
+  for (const [threshold, m] of moods) {
+    if (avg >= threshold) { mood = m; break; }
+  }
+  if (state.sick) mood = '🤒';
+  document.getElementById('mood-bubble').textContent = mood;
+
+  // ZZZ
+  document.getElementById('zzz-anim').style.display = state.sleeping ? 'block' : 'none';
+
+  // School / study buttons
+  document.getElementById('btn-school').disabled = !stageInfo.school;
+  document.getElementById('btn-study').disabled  = !stageInfo.school;
+
+  // Room
+  const room = ROOMS[state.stage % ROOMS.length];
+  const roomEl = document.getElementById('room-bg');
+  roomEl.style.background = room.bg;
+
+  // Character SVG
+  drawBaby();
+
+  // Alerts
+  checkAlerts();
+}
+
+function drawBaby() {
+  const wrap = document.getElementById('baby-svg-wrap');
+  const g = state.gender;
+  const stage = state.stage;
+  const sick = state.sick;
+
+  // Eye color
+  const eyeColor = g === 'girl' ? '#e84393' : '#2980b9';
+  // Skin
+  const skin = '#FFCBA4';
+  const skinDark = '#e8a87c';
+  // Hair
+  const hairColor = g === 'girl' ? '#8B4513' : '#5c3317';
+  // Outfit color
+  const outfitColor = g === 'girl' ? '#ff85a1' : '#74b9ff';
+  const outfitDark  = g === 'girl' ? '#e0607a' : '#5aace8';
+
+  let size = [80, 90, 100, 110, 120][stage] || 90;
+
+  // Stage-based character shapes
+  const svgs = [
+    // Stage 0 - Newborn (wrapped in blanket)
+    `<svg width="${size}" height="${size}" viewBox="0 0 100 100">
+      <!-- blanket -->
+      <ellipse cx="50" cy="72" rx="35" ry="20" fill="${outfitColor}"/>
+      <!-- head -->
+      <circle cx="50" cy="38" r="26" fill="${skin}"/>
+      ${sick ? `<circle cx="50" cy="38" r="26" fill="rgba(150,200,150,0.3)"/>` : ''}
+      <!-- cheeks -->
+      <circle cx="36" cy="44" r="6" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.6"/>
+      <circle cx="64" cy="44" r="6" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.6"/>
+      <!-- eyes -->
+      <circle cx="41" cy="36" r="5" fill="white"/>
+      <circle cx="59" cy="36" r="5" fill="white"/>
+      <circle cx="42" cy="37" r="3" fill="${eyeColor}"/>
+      <circle cx="60" cy="37" r="3" fill="${eyeColor}"/>
+      <circle cx="43" cy="36" r="1" fill="white"/>
+      <circle cx="61" cy="36" r="1" fill="white"/>
+      <!-- nose -->
+      <circle cx="50" cy="44" r="2.5" fill="${skinDark}"/>
+      <!-- mouth -->
+      <path d="M43,50 Q50,56 57,50" stroke="${skinDark}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      ${sick ? `<text x="66" y="25" font-size="14">🤒</text>` : ''}
+      <!-- hair tuft -->
+      <ellipse cx="50" cy="13" rx="8" ry="5" fill="${hairColor}"/>
+    </svg>`,
+
+    // Stage 1 - Baby (sitting)
+    `<svg width="${size}" height="${size}" viewBox="0 0 100 110">
+      <!-- body -->
+      <ellipse cx="50" cy="78" rx="22" ry="20" fill="${outfitColor}"/>
+      <!-- legs -->
+      <ellipse cx="38" cy="96" rx="10" ry="7" fill="${outfitDark}"/>
+      <ellipse cx="62" cy="96" rx="10" ry="7" fill="${outfitDark}"/>
+      <!-- arms -->
+      <ellipse cx="24" cy="75" rx="8" ry="12" fill="${outfitDark}" transform="rotate(-20,24,75)"/>
+      <ellipse cx="76" cy="75" rx="8" ry="12" fill="${outfitDark}" transform="rotate(20,76,75)"/>
+      <!-- head -->
+      <circle cx="50" cy="42" r="28" fill="${skin}"/>
+      ${sick ? `<circle cx="50" cy="42" r="28" fill="rgba(150,200,150,0.3)"/>` : ''}
+      <!-- ears -->
+      <circle cx="22" cy="44" r="8" fill="${skin}"/>
+      <circle cx="78" cy="44" r="8" fill="${skin}"/>
+      <!-- hair -->
+      ${g==='girl' ?
+        `<ellipse cx="50" cy="15" rx="24" ry="12" fill="${hairColor}"/>
+         <ellipse cx="26" cy="42" rx="5" ry="14" fill="${hairColor}"/>
+         <ellipse cx="74" cy="42" rx="5" ry="14" fill="${hairColor}"/>` :
+        `<ellipse cx="50" cy="16" rx="22" ry="10" fill="${hairColor}"/>`
+      }
+      <!-- cheeks -->
+      <circle cx="33" cy="50" r="7" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.5"/>
+      <circle cx="67" cy="50" r="7" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.5"/>
+      <!-- eyes -->
+      <circle cx="40" cy="40" r="6" fill="white"/>
+      <circle cx="60" cy="40" r="6" fill="white"/>
+      <circle cx="41" cy="41" r="3.5" fill="${eyeColor}"/>
+      <circle cx="61" cy="41" r="3.5" fill="${eyeColor}"/>
+      <circle cx="42" cy="40" r="1.2" fill="white"/>
+      <circle cx="62" cy="40" r="1.2" fill="white"/>
+      <!-- nose -->
+      <circle cx="50" cy="50" r="3" fill="${skinDark}"/>
+      <!-- mouth -->
+      <path d="M42,57 Q50,64 58,57" stroke="${skinDark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      ${sick ? `<text x="68" y="22" font-size="16">🤒</text>` : ''}
+    </svg>`,
+
+    // Stage 2 - Child (standing)
+    `<svg width="${size}" height="${size}" viewBox="0 0 100 130">
+      <!-- legs -->
+      <rect x="34" y="98" width="12" height="28" rx="6" fill="${outfitDark}"/>
+      <rect x="54" y="98" width="12" height="28" rx="6" fill="${outfitDark}"/>
+      <!-- shoes -->
+      <ellipse cx="40" cy="127" rx="10" ry="5" fill="#555"/>
+      <ellipse cx="60" cy="127" rx="10" ry="5" fill="#555"/>
+      <!-- body -->
+      <rect x="28" y="64" width="44" height="38" rx="14" fill="${outfitColor}"/>
+      <!-- arms -->
+      <rect x="12" y="66" width="16" height="28" rx="8" fill="${outfitDark}"/>
+      <rect x="72" y="66" width="16" height="28" rx="8" fill="${outfitDark}"/>
+      <!-- hands -->
+      <circle cx="20" cy="96" r="8" fill="${skin}"/>
+      <circle cx="80" cy="96" r="8" fill="${skin}"/>
+      <!-- neck -->
+      <rect x="43" y="54" width="14" height="14" rx="4" fill="${skin}"/>
+      <!-- head -->
+      <circle cx="50" cy="38" r="28" fill="${skin}"/>
+      ${sick ? `<circle cx="50" cy="38" r="28" fill="rgba(150,200,150,0.3)"/>` : ''}
+      <!-- hair -->
+      ${g==='girl' ?
+        `<ellipse cx="50" cy="12" rx="26" ry="14" fill="${hairColor}"/>
+         <rect x="22" y="28" width="8" height="22" rx="4" fill="${hairColor}"/>
+         <rect x="70" y="28" width="8" height="22" rx="4" fill="${hairColor}"/>
+         <circle cx="35" cy="16" r="5" fill="#ff85a1"/>` :
+        `<ellipse cx="50" cy="13" rx="25" ry="13" fill="${hairColor}"/>`
+      }
+      <!-- cheeks -->
+      <circle cx="32" cy="44" r="7" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.5"/>
+      <circle cx="68" cy="44" r="7" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.5"/>
+      <!-- eyes -->
+      <circle cx="40" cy="36" r="6" fill="white"/>
+      <circle cx="60" cy="36" r="6" fill="white"/>
+      <circle cx="41" cy="37" r="3.5" fill="${eyeColor}"/>
+      <circle cx="61" cy="37" r="3.5" fill="${eyeColor}"/>
+      <circle cx="42" cy="36" r="1.2" fill="white"/>
+      <circle cx="62" cy="36" r="1.2" fill="white"/>
+      <!-- nose -->
+      <circle cx="50" cy="45" r="3" fill="${skinDark}"/>
+      <!-- mouth -->
+      <path d="M42,53 Q50,60 58,53" stroke="${skinDark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      ${sick ? `<text x="68" y="18" font-size="16">🤒</text>` : ''}
+    </svg>`,
+
+    // Stage 3 - School age (with backpack)
+    `<svg width="${size}" height="${size}" viewBox="0 0 110 140">
+      <!-- legs -->
+      <rect x="36" y="100" width="14" height="34" rx="7" fill="${outfitDark}"/>
+      <rect x="60" y="100" width="14" height="34" rx="7" fill="${outfitDark}"/>
+      <!-- shoes -->
+      <ellipse cx="43" cy="135" rx="12" ry="6" fill="#444"/>
+      <ellipse cx="67" cy="135" rx="12" ry="6" fill="#444"/>
+      <!-- backpack -->
+      <rect x="68" y="55" width="20" height="30" rx="6" fill="${g==='girl'?'#a29bfe':'#74b9ff'}"/>
+      <rect x="70" y="60" width="16" height="12" rx="4" fill="${g==='girl'?'#6c5ce7':'#0984e3'}"/>
+      <!-- body -->
+      <rect x="28" y="62" width="48" height="42" rx="16" fill="${outfitColor}"/>
+      <!-- arms -->
+      <rect x="10" y="64" width="18" height="30" rx="9" fill="${outfitDark}"/>
+      <rect x="82" y="64" width="18" height="30" rx="9" fill="${outfitDark}"/>
+      <!-- hands -->
+      <circle cx="19" cy="96" r="9" fill="${skin}"/>
+      <circle cx="91" cy="96" r="9" fill="${skin}"/>
+      <!-- neck -->
+      <rect x="46" y="52" width="18" height="14" rx="5" fill="${skin}"/>
+      <!-- head -->
+      <circle cx="55" cy="36" r="30" fill="${skin}"/>
+      ${sick ? `<circle cx="55" cy="36" r="30" fill="rgba(150,200,150,0.3)"/>` : ''}
+      <!-- hair -->
+      ${g==='girl' ?
+        `<ellipse cx="55" cy="8" rx="28" ry="16" fill="${hairColor}"/>
+         <rect x="24" y="24" width="9" height="24" rx="4" fill="${hairColor}"/>
+         <rect x="77" y="24" width="9" height="24" rx="4" fill="${hairColor}"/>
+         <circle cx="38" cy="10" r="6" fill="#ff85a1"/>
+         <circle cx="72" cy="10" r="6" fill="#ff85a1"/>` :
+        `<ellipse cx="55" cy="9" rx="27" ry="15" fill="${hairColor}"/>`
+      }
+      <!-- cheeks -->
+      <circle cx="36" cy="42" r="8" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.5"/>
+      <circle cx="74" cy="42" r="8" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.5"/>
+      <!-- eyes -->
+      <circle cx="43" cy="34" r="7" fill="white"/>
+      <circle cx="67" cy="34" r="7" fill="white"/>
+      <circle cx="44" cy="35" r="4" fill="${eyeColor}"/>
+      <circle cx="68" cy="35" r="4" fill="${eyeColor}"/>
+      <circle cx="45" cy="34" r="1.5" fill="white"/>
+      <circle cx="69" cy="34" r="1.5" fill="white"/>
+      <!-- nose -->
+      <circle cx="55" cy="44" r="3.5" fill="${skinDark}"/>
+      <!-- mouth -->
+      <path d="M46,53 Q55,61 64,53" stroke="${skinDark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      ${sick ? `<text x="74" y="16" font-size="18">🤒</text>` : ''}
+    </svg>`,
+
+    // Stage 4 - Teen
+    `<svg width="${size}" height="${size}" viewBox="0 0 110 150">
+      <!-- legs -->
+      <rect x="34" y="106" width="16" height="38" rx="8" fill="${outfitDark}"/>
+      <rect x="60" y="106" width="16" height="38" rx="8" fill="${outfitDark}"/>
+      <!-- shoes -->
+      <ellipse cx="42" cy="145" rx="14" ry="7" fill="#333"/>
+      <ellipse cx="68" cy="145" rx="14" ry="7" fill="#333"/>
+      <!-- body -->
+      <rect x="24" y="65" width="62" height="46" rx="18" fill="${outfitColor}"/>
+      <!-- arms -->
+      <rect x="6" y="67" width="20" height="34" rx="10" fill="${outfitDark}"/>
+      <rect x="84" y="67" width="20" height="34" rx="10" fill="${outfitDark}"/>
+      <!-- hands -->
+      <circle cx="16" cy="103" r="10" fill="${skin}"/>
+      <circle cx="94" cy="103" r="10" fill="${skin}"/>
+      <!-- neck -->
+      <rect x="46" y="54" width="18" height="15" rx="5" fill="${skin}"/>
+      <!-- head -->
+      <circle cx="55" cy="36" r="32" fill="${skin}"/>
+      ${sick ? `<circle cx="55" cy="36" r="32" fill="rgba(150,200,150,0.3)"/>` : ''}
+      <!-- hair -->
+      ${g==='girl' ?
+        `<ellipse cx="55" cy="6" rx="30" ry="18" fill="${hairColor}"/>
+         <rect x="22" y="20" width="10" height="28" rx="5" fill="${hairColor}"/>
+         <rect x="78" y="20" width="10" height="28" rx="5" fill="${hairColor}"/>` :
+        `<ellipse cx="55" cy="7" rx="30" ry="16" fill="${hairColor}"/>
+         <rect x="24" y="18" width="8" height="16" rx="4" fill="${hairColor}"/>
+         <rect x="78" y="18" width="8" height="16" rx="4" fill="${hairColor}"/>`
+      }
+      <!-- cheeks -->
+      <circle cx="34" cy="42" r="9" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.4"/>
+      <circle cx="76" cy="42" r="9" fill="${g==='girl'?'#ffb3c8':'#ffcba4'}" opacity="0.4"/>
+      <!-- eyes -->
+      <circle cx="43" cy="33" r="7.5" fill="white"/>
+      <circle cx="67" cy="33" r="7.5" fill="white"/>
+      <circle cx="44" cy="34" r="4.5" fill="${eyeColor}"/>
+      <circle cx="68" cy="34" r="4.5" fill="${eyeColor}"/>
+      <circle cx="45" cy="33" r="1.8" fill="white"/>
+      <circle cx="69" cy="33" r="1.8" fill="white"/>
+      <!-- eyebrows -->
+      <path d="M37,24 Q43,20 49,24" stroke="${hairColor}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M61,24 Q67,20 73,24" stroke="${hairColor}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- nose -->
+      <path d="M52,43 Q55,49 58,43" stroke="${skinDark}" stroke-width="2" fill="none"/>
+      <!-- mouth -->
+      <path d="M45,54 Q55,63 65,54" stroke="${skinDark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      ${sick ? `<text x="76" y="14" font-size="18">🤒</text>` : ''}
+    </svg>`
+  ];
+
+  wrap.innerHTML = svgs[Math.min(state.stage, svgs.length-1)];
+}
+
+// ─── NOTIFY ───────────────────────────────────────────────
+let notifTimer = null;
+function notify(msg) {
+  const bar = document.getElementById('notif-bar');
+  bar.textContent = msg;
+  bar.style.display = 'block';
+  if (notifTimer) clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => { bar.style.display = 'none'; }, 3500);
+}
+
+// ─── DEAD ─────────────────────────────────────────────────
+function showDead() {
+  showScreen('dead-screen');
+  document.getElementById('dead-title').textContent = state.name + ' hastalandı! 😢';
+  document.getElementById('dead-msg').textContent =
+    'Daha iyi bakılması gerekiyordu. Yeni bir bebek deneyelim!';
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+window.onload = function() {
+  if (loadGame()) {
+    if (state.dead) { showDead(); return; }
+    showGameScreen();
+    // Catch up ticks for offline time
+    const now = Date.now();
+    const offlineSec = (now - (state.lastTick || now)) / 1000;
+    if (offlineSec > 30) {
+      // Simulate offline degradation
+      const decayFactor = Math.min(offlineSec, 3600); // cap at 1hr
+      state.hunger  = Math.max(0, state.hunger  - decayFactor * 0.008);
+      state.happy   = Math.max(0, state.happy   - decayFactor * 0.005);
+      state.energy  = Math.max(0, state.energy  - decayFactor * 0.004);
+      state.hygiene = Math.max(0, state.hygiene - decayFactor * 0.003);
+      state.daysBorn = (now - state.birthTime) / 86400000;
+      state.lastTick = now;
+      updateStage();
+      checkAlerts();
+      if (offlineSec > 300) notify('Hoş geldin! ' + Math.floor(offlineSec/60) + ' dakika yoktun.');
+      saveGame();
+    }
+  }
+  // else welcome screen is already shown
+};
+</script>
+</body>
+</html>
